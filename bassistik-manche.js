@@ -44,9 +44,9 @@
   function show(name) { return String(name || "").replace(/𝄪/g, "♯♯").replace(/𝄫/g, "♭♭"); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); }
 
-  /* ── Styles (injectés une fois, tout sous .bskx) ──────────────────── */
+  /* ── Styles (dans le shadow DOM de chaque manche) ──────────────────── */
   var CSS = [
-    ".bskx{--x-bg:var(--cream,#F7F4EC);--x-bg2:var(--cream-2,#EFEBE0);--x-ink:var(--ink,#171A22);--x-body:var(--body,#4A5260);",
+    ":host{display:block;}.bskx{--x-bg:var(--cream,#F7F4EC);--x-bg2:var(--cream-2,#EFEBE0);--x-ink:var(--ink,#171A22);--x-body:var(--body,#4A5260);",
     "--x-soft:var(--soft,#8A8D96);--x-line:var(--line,#E4DFD2);--x-or:#FF6B00;--x-oink:var(--o-ink,#B54B00);--x-blue:#5E7488;",
     "font-family:Montserrat,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--x-ink);background:transparent;box-sizing:border-box;width:100%;}",
     ".bskx *{box-sizing:border-box;}",
@@ -91,13 +91,6 @@
     ".bskx-swipe{display:none;font-size:12px;color:var(--x-soft);margin:6px 0 0;}",
     "@media (max-width:560px){.bskx-swipe{display:block;}.bskx-ctrl{grid-template-columns:1fr 1fr;}.bskx-cell{min-width:38px;}}"
   ].join("");
-  function injectCss(doc) {
-    if (doc.getElementById("bskx-css")) return;
-    var st = doc.createElement("style");
-    st.id = "bskx-css";
-    st.textContent = CSS;
-    (doc.head || doc.documentElement).appendChild(st);
-  }
 
   /* ── Audio : échantillon de piano transposé ───────────────────────── */
   var AU = { ac: null, buf: null, loading: null };
@@ -133,8 +126,9 @@
   /* ── Explorateur ─────────────────────────────────────────────────── */
   function mount(host, opts) {
     opts = opts || {};
-    var doc = host.ownerDocument || document;
-    injectCss(doc);
+    /* Le manche vit dans un shadow DOM : les styles de la page hôte ne le touchent pas
+       (polices et variables CSS, elles, se transmettent). */
+    var view = host.shadowRoot || (host.attachShadow ? host.attachShadow({ mode: "open" }) : host);
     var st = {
       root: opts.root || "Do",
       type: opts.type || "Gamme majeure",
@@ -148,7 +142,7 @@
       timers: []
     };
 
-    host.innerHTML =
+    view.innerHTML = '<style>' + CSS + '</style>' +
       '<div class="bskx">' +
         '<div class="bskx-sugg" hidden></div>' +
         '<div class="bskx-ctrl">' +
@@ -170,8 +164,8 @@
         '<p class="bskx-note"></p>' +
       '</div>';
 
-    var $ = function (s) { return host.querySelector(s); };
-    var sel = function (k) { return host.querySelector('select[data-k="' + k + '"]'); };
+    var $ = function (s) { return view.querySelector(s); };
+    var sel = function (k) { return view.querySelector('select[data-k="' + k + '"]'); };
 
     function field(label, key, options) {
       return '<div class="bskx-f"><label>' + label + '</label><select data-k="' + key + '">' +
@@ -322,9 +316,9 @@
     function stop() {
       st.timers.forEach(clearTimeout); st.timers = [];
       st.playing = false;
-      var b = host.querySelector(".bskx-play");
+      var b = view.querySelector(".bskx-play");
       if (b) { b.setAttribute("aria-pressed", "false"); b.textContent = "Écouter"; }
-      var on = host.querySelectorAll(".bskx-dot.is-on");
+      var on = view.querySelectorAll(".bskx-dot.is-on");
       for (var i = 0; i < on.length; i++) on[i].classList.remove("is-on");
     }
     function play() {
@@ -336,13 +330,13 @@
         var seq = path(m), beat = 60 / st.bpm;
         if (!seq.length) return;
         st.playing = true;
-        var b = host.querySelector(".bskx-play");
+        var b = view.querySelector(".bskx-play");
         b.setAttribute("aria-pressed", "true"); b.textContent = "Arrêter";
         var t0 = ac.currentTime + 0.08;
         seq.forEach(function (p, k) {
           playMidi(p.midi, t0 + k * beat, Math.min(1.2, beat * 1.4));
           st.timers.push(setTimeout(function () {
-            var g = host.querySelector('.bskx-dot[data-s="' + p.s + '"][data-f="' + p.f + '"]');
+            var g = view.querySelector('.bskx-dot[data-s="' + p.s + '"][data-f="' + p.f + '"]');
             if (g) flash(g, beat * 900);
           }, (0.08 + k * beat) * 1000));
         });
@@ -364,7 +358,7 @@
 
     /* ── Suggestions issues d'un tirage ── */
     function markSugg() {
-      var chips = host.querySelectorAll(".bskx-chip");
+      var chips = view.querySelectorAll(".bskx-chip");
       for (var i = 0; i < chips.length; i++) {
         var on = chips[i].getAttribute("data-type") === st.type && chips[i].getAttribute("data-root") === st.root;
         chips[i].setAttribute("aria-pressed", on ? "true" : "false");
