@@ -1,0 +1,112 @@
+<!-- ===== SUPER ROLL : manche intégré (bassistik-core) — oct. 2026 ===== -->
+<script src="https://cdn.jsdelivr.net/gh/coursbassistik-lgtm/bassistik-core@__SHA__/bassistik-core.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/coursbassistik-lgtm/bassistik-core@__SHA__/bassistik-manche.js"></script>
+<style>
+#bsk-dice .bskr-modes{display:flex;gap:0;margin:0 0 16px;border:1px solid var(--line,#E4DFD2);width:max-content;max-width:100%;}
+#bsk-dice .bskr-mode{font:inherit;font-size:14px;font-weight:700;padding:10px 18px;border:0;background:var(--cream,#F7F4EC);color:var(--ink,#171A22);cursor:pointer;}
+#bsk-dice .bskr-mode[aria-pressed="true"]{background:var(--ink,#171A22);color:#fff;}
+#bsk-dice .bskr-mode .bskr-lock{font-weight:600;font-size:12px;color:var(--o-ink,#B54B00);margin-left:6px;}
+#bsk-dice .bskr-mode[aria-pressed="true"] .bskr-lock{color:#FFB27A;}
+#bsk-dice.bskr-choisir .grid > article:not(.bskr-card),
+#bsk-dice.bskr-choisir footer,
+#bsk-dice.bskr-choisir ~ .bar-mobile,
+body.bskr-choisir .bar-mobile{display:none !important;}
+#bsk-dice .bskr-card .bskr-empty{font-size:14px;color:var(--body,#4A5260);margin:0 0 12px;}
+#bsk-dice .bskr-pass{display:none;margin:0 0 16px;padding:16px;border:1px solid var(--line,#E4DFD2);background:var(--cream,#F7F4EC);font-size:14px;line-height:1.5;color:var(--body,#4A5260);}
+#bsk-dice .bskr-pass a{display:inline-block;margin-top:10px;padding:10px 18px;background:#FF6B00;color:#fff;font-weight:700;text-decoration:none;}
+#bsk-dice.bskr-show-pass .bskr-pass{display:block;}
+</style>
+<script>
+(function () {
+  "use strict";
+  var root = document.getElementById("bsk-dice");
+  var grid = root && root.querySelector(".grid");
+  var PASS_URL = "https://www.bassistik-live.com/abonnement-bassistik-live";
+  var state = { ex: null, sig: "", locked: false, mode: "tirer", pending: null };
+
+  function ready() { return !!(window.BskCore && window.BskManche && grid); }
+
+  function mount() {
+    if (state.ex || !ready()) return state.ex;
+    // Sélecteur de mode, sous l'en-tête
+    var modes = document.createElement("div");
+    modes.className = "bskr-modes";
+    modes.setAttribute("role", "group");
+    modes.innerHTML =
+      '<button type="button" class="bskr-mode" data-mode="tirer" aria-pressed="true">Tirer les dés<span class="bskr-lock" hidden>Pass</span></button>' +
+      '<button type="button" class="bskr-mode" data-mode="choisir" aria-pressed="false">Choisir moi-même</button>';
+    grid.parentNode.insertBefore(modes, grid);
+    var pass = document.createElement("div");
+    pass.className = "bskr-pass";
+    pass.innerHTML = "Les dés tirent pour toi une tonalité, un exercice, un mode et une échelle, puis t'affichent tout ça sur le manche, avec un playback pour jouer dessus. C'est l'outil d'entraînement du Pass.<br>" +
+      '<a href="' + PASS_URL + '" target="_top">Découvrir le Pass</a>';
+    grid.parentNode.insertBefore(pass, grid);
+    modes.addEventListener("click", function (e) {
+      var b = e.target.closest(".bskr-mode");
+      if (b) setMode(b.getAttribute("data-mode"));
+    });
+
+    // Carte « Sur le manche », en dernier dans la grille
+    var card = document.createElement("article");
+    card.className = "card span-12 bskr-card";
+    card.innerHTML =
+      '<div class="card-head"><div class="card-title-wrap">' +
+        '<h2 class="card-title"><span class="badge">Manche</span> Sur le manche</h2>' +
+        '<p class="card-sub">Gammes, modes et arpèges en 4, 5 ou 6 cordes. Clique sur une pastille pour l\'entendre.</p>' +
+      '</div></div>' +
+      '<div class="card-body"><p class="bskr-empty">Lance les dés : ton tirage s\'affichera ici, prêt à être joué.</p><div class="bskr-host"></div></div>';
+    grid.appendChild(card);
+    state.ex = BskManche.mount(card.querySelector(".bskr-host"), { root: "Do", type: "Gamme majeure" });
+    if (state.pending) { draw(state.pending.key, state.pending.items); state.pending = null; }
+    return state.ex;
+  }
+
+  function setMode(m) {
+    if (m === "tirer" && state.locked) { root.classList.add("bskr-show-pass"); m = "choisir"; }
+    else root.classList.remove("bskr-show-pass");
+    state.mode = m;
+    root.classList.toggle("bskr-choisir", m === "choisir");
+    document.body.classList.toggle("bskr-choisir", m === "choisir");
+    var btns = root.querySelectorAll(".bskr-mode");
+    for (var i = 0; i < btns.length; i++) btns[i].setAttribute("aria-pressed", btns[i].getAttribute("data-mode") === m ? "true" : "false");
+    var empty = root.querySelector(".bskr-empty");
+    if (empty) empty.hidden = (m === "choisir") || !!state.sig;
+    if (state.ex && m === "choisir") state.ex.setSuggestions("", []);
+    if (state.ex && m === "tirer" && state.last) { state.sig = ""; draw(state.last.key, state.last.items); }
+  }
+
+  /* Appelé par bskManche() du Roll à chaque rendu du tirage */
+  function draw(key, items) {
+    if (!state.ex) { mount(); if (!state.ex) { state.pending = { key: key, items: items }; return false; } }
+    items = (items || []).map(function (i) { return { type: i.type, label: i.label }; });
+    state.last = { key: key, items: items };
+    if (state.mode !== "tirer") return true;
+    var sig = key + "|" + items.map(function (i) { return i.type; }).join(",");
+    if (sig === state.sig) return true;      // même tirage : on ne réinitialise pas le choix de l'élève
+    state.sig = items.length ? sig : "";
+    var empty = root.querySelector(".bskr-empty");
+    if (empty) empty.hidden = !!items.length;
+    state.ex.setSuggestions(key, items, "Ton tirage");
+    return true;
+  }
+
+  /* Réglages envoyés par la page Wix : { bskMode: "choisir", bskLock: true, bskKey, bskType } */
+  window.addEventListener("message", function (e) {
+    var d = e.data;
+    if (!d || typeof d !== "object") return;
+    if (!("bskMode" in d) && !("bskLock" in d)) return;
+    mount();
+    if (d.bskLock) {
+      state.locked = true;
+      var lock = root.querySelector(".bskr-lock");
+      if (lock) lock.hidden = false;
+    }
+    if (d.bskMode) setMode(d.bskMode);
+    if (state.ex && (d.bskKey || d.bskType)) state.ex.set({ root: d.bskKey, type: d.bskType });
+  });
+
+  window.BskBridge = { draw: draw, setMode: setMode, mount: mount };
+  mount();
+})();
+</script>
+<!-- ===== /SUPER ROLL ===== -->
