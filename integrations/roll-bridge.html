@@ -94,36 +94,32 @@ body.bskr-choisir .bar-mobile{display:none !important;}
     return true;
   }
 
-  /* Réglages envoyés par la page Wix : { bskMode: "choisir", bskLock: true, bskKey, bskType } */
-  window.addEventListener("message", function (e) {
-    var d = e.data;
+  /* Réglages : window.BSK_HOST posé dans le bloc (mode, verrou, titre),
+     puis messages de la page Wix (lien profond { bskKey, bskType }). */
+  function apply(d) {
     if (!d || typeof d !== "object") return;
-    if (!("bskMode" in d) && !("bskLock" in d)) return;
+    if (!("bskMode" in d) && !("bskLock" in d) && !("bskKey" in d) && !("bskType" in d)) return;
     mount();
     if (d.bskLock) {
       state.locked = true;
       var lock = root.querySelector(".bskr-lock");
       if (lock) lock.hidden = false;
     }
-    // Titre propre à la page hôte (répertoires) à la place de « Roll & Groove »
-    if (d.bskTitle) {
-      var h = root.querySelector(".topbar h1, .topbar h2");
-      if (h) h.textContent = d.bskTitle;
-    }
-    if (d.bskSub) {
-      var p = root.querySelector(".topbar p");
-      if (p) p.textContent = d.bskSub;
-    }
+    var h = root.querySelector(".topbar h1, .topbar h2"), p = root.querySelector(".topbar p");
+    if (d.bskTitle && h) h.textContent = d.bskTitle;
+    if (d.bskSub && p) p.textContent = d.bskSub;
     if (d.bskEyebrow) {
       var eb = root.querySelector(".topbar .brand > :first-child");
       if (eb && eb !== h && eb !== p) eb.textContent = d.bskEyebrow;
     }
     if (d.bskMode) setMode(d.bskMode);
     if (state.ex && (d.bskKey || d.bskType)) state.ex.set({ root: d.bskKey, type: d.bskType });
-  });
+  }
+  window.addEventListener("message", function (e) { apply(e.data); });
 
-  window.BskBridge = { draw: draw, setMode: setMode, mount: mount };
+  window.BskBridge = { draw: draw, setMode: setMode, mount: mount, apply: apply };
   mount();
+  if (window.BSK_HOST) apply(window.BSK_HOST);
 })();
 </script>
 <!-- ===== /SUPER ROLL ===== -->
