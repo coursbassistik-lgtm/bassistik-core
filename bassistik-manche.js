@@ -215,7 +215,9 @@
         return;
       }
       var def = isArp(st.type) ? Core.ARPS[st.type] : Core.SCALES[st.type];
-      title.textContent = (isArp(st.type) ? "Arpège " + show(m.symbol) : show(m.root) + " " + st.type.replace(/^Gamme /, ""));
+      title.textContent = isArp(st.type) ? "Arpège " + show(m.symbol) + " (" + st.type.replace(/^Tétrade /, "tétrade ").replace(/^Triade /, "triade ") + ")"
+        : familyOf(st.type) === "Modes" ? show(m.root) + " " + st.type.toLowerCase()
+        : st.type + " de " + show(m.root);
       sub.textContent = m.notes.map(show).join(" · ");
 
       formula.innerHTML = m.notes.map(function (n, i) {
