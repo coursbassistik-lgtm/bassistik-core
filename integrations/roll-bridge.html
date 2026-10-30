@@ -15,6 +15,7 @@ body.bskr-choisir .bar-mobile{display:none !important;}
 #bsk-dice .bskr-card .bskr-empty{font-size:14px;color:var(--body,#4A5260);margin:0 0 12px;}
 #bsk-dice .bskr-pass{display:none;margin:0 0 16px;padding:16px;border:1px solid var(--line,#E4DFD2);background:var(--cream,#F7F4EC);font-size:14px;line-height:1.5;color:var(--body,#4A5260);}
 #bsk-dice .bskr-pass a{display:inline-block;margin-top:10px;padding:10px 18px;background:#FF6B00;color:#fff;font-weight:700;text-decoration:none;}
+#bsk-dice .bskr-pass a.bskr-pass-2{background:transparent;color:var(--ink,#171A22);border:1px solid var(--line,#E4DFD2);margin-left:6px;}
 #bsk-dice.bskr-show-pass .bskr-pass{display:block;}
 </style>
 <script>
@@ -23,6 +24,7 @@ body.bskr-choisir .bar-mobile{display:none !important;}
   var root = document.getElementById("bsk-dice");
   var grid = root && root.querySelector(".grid");
   var PASS_URL = "https://www.bassistik-live.com/abonnement-bassistik-live";
+  var ROLL_URL = "https://www.bassistik-live.com/roll-and-groove-bassistik";
   var state = { ex: null, sig: "", locked: false, mode: "tirer", pending: null };
 
   function ready() { return !!(window.BskCore && window.BskManche && grid); }
@@ -39,8 +41,9 @@ body.bskr-choisir .bar-mobile{display:none !important;}
     grid.parentNode.insertBefore(modes, grid);
     var pass = document.createElement("div");
     pass.className = "bskr-pass";
-    pass.innerHTML = "Les dés tirent pour toi une tonalité, un exercice, un mode et une échelle, puis t'affichent tout ça sur le manche, avec un playback pour jouer dessus. C'est l'outil d'entraînement du Pass.<br>" +
-      '<a href="' + PASS_URL + '" target="_top">Découvrir le Pass</a>';
+    pass.innerHTML = "Les dés vivent dans Roll & Groove : ils tirent pour toi une tonalité, un exercice, un mode et une échelle, puis t'affichent tout ça sur le manche, avec un playback pour jouer dessus. C'est l'outil d'entraînement du Pass.<br>" +
+      '<a href="' + ROLL_URL + '" target="_top">Ouvrir Roll & Groove</a> ' +
+      '<a class="bskr-pass-2" href="' + PASS_URL + '" target="_top">Découvrir le Pass</a>';
     grid.parentNode.insertBefore(pass, grid);
     modes.addEventListener("click", function (e) {
       var b = e.target.closest(".bskr-mode");
@@ -101,6 +104,19 @@ body.bskr-choisir .bar-mobile{display:none !important;}
       state.locked = true;
       var lock = root.querySelector(".bskr-lock");
       if (lock) lock.hidden = false;
+    }
+    // Titre propre à la page hôte (répertoires) à la place de « Roll & Groove »
+    if (d.bskTitle) {
+      var h = root.querySelector(".topbar h1, .topbar h2");
+      if (h) h.textContent = d.bskTitle;
+    }
+    if (d.bskSub) {
+      var p = root.querySelector(".topbar p");
+      if (p) p.textContent = d.bskSub;
+    }
+    if (d.bskEyebrow) {
+      var eb = root.querySelector(".topbar .brand > :first-child");
+      if (eb && eb !== h && eb !== p) eb.textContent = d.bskEyebrow;
     }
     if (d.bskMode) setMode(d.bskMode);
     if (state.ex && (d.bskKey || d.bskType)) state.ex.set({ root: d.bskKey, type: d.bskType });
