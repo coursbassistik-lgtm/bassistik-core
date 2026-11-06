@@ -5,7 +5,7 @@ Module théorique commun aux outils pédagogiques de [Bassistik](https://www.bas
 ## Utilisation dans un bloc HTML Wix
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/coursbassistik-lgtm/bassistik-core@v0.1.0/bassistik-core.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/coursbassistik-lgtm/bassistik-core@v0.2.0/bassistik-core.js"></script>
 <script>
   BskCore.scale("Ré", "Dorien").notes;            // ["Ré","Mi","Fa","Sol","La","Si","Do"]
   BskCore.arp("Si", "Tétrade diminuée").notes;    // ["Si","Ré","Fa","La♭"]
@@ -14,7 +14,7 @@ Module théorique commun aux outils pédagogiques de [Bassistik](https://www.bas
 </script>
 ```
 
-Toujours viser un **tag de version** (`@v0.1.0`) : un outil en ligne ne change jamais sans qu'on le décide.
+Toujours viser un **tag de version** (`@v0.2.0`) : un outil en ligne ne change jamais sans qu'on le décide.
 
 ## Contenu
 

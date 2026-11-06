@@ -14,7 +14,7 @@
   "use strict";
   if (!Core) throw new Error("bassistik-manche : charger bassistik-core.js avant.");
 
-  var VERSION = "0.1.0";
+  var VERSION = "0.2.0";
   var SAMPLE_C4 = "https://static.wixstatic.com/mp3/48c5a7_c89fffe28fe94c5c9d81e02b3b08037e.wav";
 
   /* ── Données ─────────────────────────────────────────────────────── */
@@ -24,6 +24,7 @@
                "Pentatonique majeure", "Pentatonique mineure", "Gamme blues", "Gamme par tons",
                "Diminuée ton/demi-ton", "Diminuée demi-ton/ton"],
     "Modes": ["Ionien", "Dorien", "Phrygien", "Lydien", "Mixolydien", "Éolien", "Locrien"],
+    "Modes avancés": ["Altéré", "Lydien dominant", "Locrien ♮2", "Phrygien dominant"],
     "Arpèges": Object.keys(Core.ARPS)
   };
   /* Accordages, de la corde grave à l'aiguë (MIDI) */
@@ -216,7 +217,7 @@
       }
       var def = isArp(st.type) ? Core.ARPS[st.type] : Core.SCALES[st.type];
       title.textContent = isArp(st.type) ? "Arpège " + show(m.symbol) + " (" + st.type.replace(/^Tétrade /, "tétrade ").replace(/^Triade /, "triade ") + ")"
-        : familyOf(st.type) === "Modes" ? show(m.root) + " " + st.type.toLowerCase()
+        : /^Modes/.test(familyOf(st.type) || "") ? show(m.root) + " " + st.type.toLowerCase()
         : st.type + " de " + show(m.root);
       sub.textContent = m.notes.map(show).join(" · ");
 
@@ -236,6 +237,10 @@
       if (def.parent) {
         var par = Core.parentMajor(st.root, st.type);
         if (par) info.push(show(m.root) + " " + st.type.toLowerCase() + " : " + MODE_RANK[def.parent - 1] + " mode de " + show(par) + " majeur. Mêmes notes, autre centre de gravité.");
+      }
+      if (def.from) {
+        var po = Core.parentOf(st.root, st.type);
+        if (po) info.push(show(m.root) + " " + st.type.toLowerCase() + " : " + MODE_RANK[po.degree - 1] + " mode de " + show(po.root) + " " + po.scale.replace(/^Gamme /, "") + ". Mêmes notes, autre centre de gravité.");
       }
       if (def.blueNote != null) info.push("La blue note (" + m.degrees[def.blueNote] + ") apparaît en bleu : une note de passage, pas un appui.");
       if (isArp(st.type)) info.push("Arpège : les notes de l'accord, une par une. Repère la fondamentale en orange sur chaque corde.");

@@ -21,6 +21,14 @@ assert.strictEqual(B.diatonic("Do", "Gamme mineure mélodique", 4).map(d => d.sy
   "Dom(Maj7) Rém7 Mi♭+(Maj7) Fa7 Sol7 Lam7♭5 Sim7♭5");
 assert.strictEqual(B.diatonic("Mi♭", "Gamme majeure", 4).map(d => d.symbol).join(" "),
   "Mi♭Maj7 Fam7 Solm7 La♭Maj7 Si♭7 Dom7 Rém7♭5");
+eq("Sol", "Altéré", "Sol La♭ La♯ Si Ré♭ Mi♭ Fa");
+eq("Do", "Lydien dominant", "Do Ré Mi Fa♯ Sol La Si♭");
+eq("Do", "Locrien ♮2", "Do Ré Mi♭ Fa Sol♭ La♭ Si♭");
+eq("Mi", "Phrygien dominant", "Mi Fa Sol♯ La Si Do Ré");
+assert.deepStrictEqual(B.parentOf("Sol", "Altéré"), { root: "La♭", scale: "Gamme mineure mélodique", degree: 7 });
+assert.strictEqual(B.parentOf("Do", "Lydien dominant").root, "Sol");
+assert.strictEqual(B.parentOf("Do", "Locrien ♮2").root, "Mi♭");
+assert.strictEqual(B.parentOf("Mi", "Phrygien dominant").root, "La");
 // toutes les gammes × 12 toniques usuelles s'écrivent sans erreur
 for (const t in B.SCALES) for (let pc = 0; pc < 12; pc++) {
   const r = B.tonic(pc, B.SCALES[t].color === "minor" ? "minor" : "major");

@@ -11,7 +11,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var VERSION = "0.1.0";
+  var VERSION = "0.2.0";
 
   /* ── Lettres et altérations ───────────────────────────────────────── */
   var LETTERS = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"];
@@ -78,6 +78,11 @@
     "Mixolydien": S(HEPTA, [0, 2, 4, 5, 7, 9, 10], "major", { degrees: ["1", "2", "3", "4", "5", "6", "♭7"], parent: 5 }),
     "Éolien":     S(HEPTA, [0, 2, 3, 5, 7, 8, 10], "minor", { degrees: ["1", "2", "♭3", "4", "5", "♭6", "♭7"], parent: 6 }),
     "Locrien":    S(HEPTA, [0, 1, 3, 5, 6, 8, 10], "diminished", { degrees: ["1", "♭2", "♭3", "4", "♭5", "♭6", "♭7"], parent: 7 }),
+    /* Modes issus des mineures mélodique et harmonique (niveau avancé du Roll & Groove) */
+    "Altéré":            S([0, 1, 1, 2, 4, 5, 6], [0, 1, 3, 4, 6, 8, 10], "dominant", { degrees: ["1", "♭2", "♯2", "3", "♭5", "♭6", "♭7"], from: ["Gamme mineure mélodique", 7] }),
+    "Lydien dominant":   S(HEPTA, [0, 2, 4, 6, 7, 9, 10], "dominant", { degrees: ["1", "2", "3", "♯4", "5", "6", "♭7"], from: ["Gamme mineure mélodique", 4] }),
+    "Locrien ♮2":        S(HEPTA, [0, 2, 3, 5, 6, 8, 10], "diminished", { degrees: ["1", "2", "♭3", "4", "♭5", "♭6", "♭7"], from: ["Gamme mineure mélodique", 6] }),
+    "Phrygien dominant": S(HEPTA, [0, 1, 4, 5, 7, 8, 10], "dominant", { degrees: ["1", "♭2", "3", "4", "5", "♭6", "♭7"], from: ["Gamme mineure harmonique", 5] }),
     "Pentatonique majeure": S([0, 1, 2, 4, 5], [0, 2, 4, 7, 9], "major", { degrees: ["1", "2", "3", "5", "6"] }),
     "Pentatonique mineure": S([0, 2, 3, 4, 6], [0, 3, 5, 7, 10], "minor", { degrees: ["1", "♭3", "4", "5", "♭7"] }),
     "Gamme blues":          S([0, 2, 3, 4, 4, 6], [0, 3, 5, 6, 7, 10], "minor", { degrees: ["1", "♭3", "4", "♭5", "5", "♭7"], blueNote: 3 }),
@@ -157,6 +162,15 @@
     return spellOn(r.letter - p, r.pc - majSemis[p]).name;
   }
 
+  /* Gamme d'origine d'un mode hors majeur ("Do altéré" → 7e mode de Ré♭ mineure mélodique). */
+  function parentOf(root, modeName) {
+    var def = SCALES[modeName], r = parseNote(root);
+    if (!def || !def.from || !r) return null;
+    var src = SCALES[def.from[0]], d = def.from[1] - 1;
+    var n = spellOn(r.letter - src.steps[d], r.pc - src.semis[d]);
+    return n ? { root: n.name, scale: def.from[0], degree: def.from[1] } : null;
+  }
+
   return {
     VERSION: VERSION,
     LETTERS: LETTERS.slice(),
@@ -169,6 +183,7 @@
     arp: arp,
     diatonic: diatonic,
     parentMajor: parentMajor,
+    parentOf: parentOf,
     qualityOf: qualityOf
   };
 });
